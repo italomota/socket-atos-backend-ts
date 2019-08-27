@@ -12,7 +12,7 @@ class App {
 
   public constructor () {
     this.app = express()
-    this.server = http.Server(this.app)
+    this.server = new http.Server(this.app)
     this.io = socketIO(this.server)
 
     this.ativarMiddlewares()
@@ -26,7 +26,7 @@ class App {
 
   public ativarSocketIO (): void {
     this.io.on('connect', socket => {
-      this.io.sockets.emit('idsConectados', Object.keys(this.io.sockets.sockets))
+      /*this.io.sockets.emit('idsConectados', Object.keys(this.io.sockets.sockets))*/
 
       socket.on('entrarSala', sala => {
         socket.join(sala, () => {
@@ -52,9 +52,9 @@ class App {
         this.io.sockets.in(id).emit('mensagens', novaMensagem)
       })
 
-      socket.on('disconnect', () => {
+      /*socket.on('disconnect', () => {
         this.io.sockets.emit('idsConectados', Object.keys(this.io.sockets.sockets))
-      })
+      })*/
     })
   }
 }
