@@ -1,3 +1,3 @@
 import server from './app'
 
-server.listen()
+server.listen(3333)
