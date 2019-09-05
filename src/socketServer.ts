@@ -11,6 +11,7 @@ enum Acao {
 }
 
 interface Information {
+  tipo?: number | string;
   token?: string;
   cdRede?: number;
   cdGrupoEmpresa?: number;
@@ -36,6 +37,8 @@ class SocketServer {
       socket.join(cnpj)
       socket.join(idUsuario)
 
+      io.sockets.emit('idsConectados', Object.keys(io.sockets.sockets))
+
       socket.on('sendBroadcast', (info: Information) => {
         switch (info.evento.modulo) {
           case (Modulo.CHAT): {
@@ -47,6 +50,26 @@ class SocketServer {
             break
           }
         }
+      })
+
+      socket.on('sendByDynamic', (info: Information) => {
+        switch (info.evento.modulo) {
+          case (Modulo.CHAT): {
+            console.log('Entrou', info.tipo)
+            io.in(info.tipo).emit('response', info)
+            break
+          }
+          case (Modulo.DADOS_ACESSO): {
+            io.in(info.tipo).emit('response', info)
+            break
+          }
+        }
+      })
+
+      socket.on('sairGrupo', (id: string | number) => {
+        socket.leave(id, () => {
+          console.log('Saiu do grupo', id)
+        })
       })
     })
   }
