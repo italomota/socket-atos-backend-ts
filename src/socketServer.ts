@@ -1,34 +1,18 @@
-enum Modulo {
-  CHAT = 'CHAT',
-  DADOS_ACESSO = 'DADOS_ACESSO',
-}
-
-enum Acao {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  DELETE = 'DELETE',
-}
-
-interface ObjetoPadrao {
-  tipo: string;
-  token: string;
-  cdRede: number;
-  cdGrupoEmpresa: number;
-  cnpj: string;
-  idUsuario: number;
-  idConexao: string;
-  evento: {
-    modulo: Modulo;
-    acao: Acao;
-  };
-  filtro: object;
-  dados: object;
-}
+import { Modulo } from './enums/Modulo'
+import { ObjetoPadrao } from './types/ObjetoPadrao'
 
 class SocketServer {
   public ativar (io): void {
-    io.on('connect', socket => {
+    io.on('connect', (socket: SocketIO.Server) => {
+      io.sockets.emit('idsConectados', Object.keys(io.sockets.sockets))
+
+      const { cdRede, cdGrupoEmpresa, cnpj, idUsuario } = socket.handshake.query
+
+      socket.join(cdRede)
+      socket.join(cdGrupoEmpresa)
+      socket.join(cnpj)
+      socket.join(idUsuario)
+
       socket.on('entrarSala', sala => {
         socket.join(sala, () => {
           socket.emit('sala')
@@ -64,6 +48,40 @@ class SocketServer {
         } else {
           socket.broadcast.emit('respSolicitacaoServidor', info)
         }
+      })
+
+      socket.on('sendBroadcast', (info: ObjetoPadrao) => {
+        switch (info.evento.modulo) {
+          case (Modulo.CHAT): {
+            // io.emit('response', info)
+            socket.broadcast.emit('response', info)
+            break
+          }
+          case (Modulo.DADOS_ACESSO): {
+            // io.emit('response', info)
+            socket.broadcast.emit('response', info)
+            break
+          }
+        }
+      })
+
+      socket.on('sendByDynamic', (info: ObjetoPadrao) => {
+        switch (info.evento.modulo) {
+          case (Modulo.CHAT): {
+            io.in(info.tipo).emit('response', info)
+            break
+          }
+          case (Modulo.DADOS_ACESSO): {
+            io.in(info.tipo).emit('response', info)
+            break
+          }
+        }
+      })
+
+      socket.on('sairGrupo', (id: string | number) => {
+        socket.leave(id, () => {
+          console.log('Saiu do grupo', id)
+        })
       })
     })
   }
